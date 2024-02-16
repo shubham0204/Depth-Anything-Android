@@ -32,6 +32,13 @@ $> git clone --depth=1 https://github.com/shubham0204/Depth-Anything-Android
 
 3. [Connect a device](https://developer.android.com/codelabs/basic-android-kotlin-compose-connect-device#0) to Android Studio, and select `Run Application` from the top navigation pane.
 
+## Useful Resources
+
+* [Depth Anything: Unleashing the Power of Large-Scale Unlabeled Data](https://arxiv.org/abs/2401.10891)
+* [fabio-sim/Depth-Anything-ONNX](https://github.com/fabio-sim/Depth-Anything-ONNX)
+* [ONNX Runtime: How to develop a mobile application with ONNX Runtime](https://onnxruntime.ai/docs/tutorials/mobile/)
+* [ONNX Runtime: Create Float16 and Mixed Precision Models](https://onnxruntime.ai/docs/performance/model-optimizations/float16.html)
+
 ## Citation
 
 ```

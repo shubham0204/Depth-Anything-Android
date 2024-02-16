@@ -12,8 +12,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
 
+/**
+ * Model details:
+ * Input shape -> ( B , W , H , 3 ), dtype=UINT8
+ * Output shape -> ( B , 518 , 518 ), dtype=UINT8
+ */
 class DepthAnything(
-    private val context: Context
+    context: Context
 ) {
 
     private val ortEnvironment = OrtEnvironment.getEnvironment()
@@ -21,35 +26,37 @@ class DepthAnything(
     private val inputName = ortSession.inputNames.iterator().next()
 
     private val rotateTransform = Matrix().apply {
-        postRotate( 90f )
+        postRotate(90f)
     }
 
+    /**
+     * Given an image, return the single-channel depth image
+     */
     suspend fun predict(
         inputImage: Bitmap
     ): Bitmap = withContext( Dispatchers.Default ) {
-        // val t1 = System.currentTimeMillis()
         val imagePixels = convert( inputImage )
-        // val t3 = System.currentTimeMillis()
         val inputTensor  = OnnxTensor.createTensor(
             ortEnvironment ,
             imagePixels ,
             longArrayOf( 1 , inputImage.width.toLong() , inputImage.height.toLong() , 3 ) ,
             OnnxJavaType.UINT8 )
-        // val t2 = System.currentTimeMillis()
         val outputs = ortSession.run( mapOf( inputName to inputTensor ) )
         val outputTensor = outputs[0] as OnnxTensor
-        // Log.e( "APP" , "Conversion time -> ${t3-t1}")
-        // Log.e( "APP" , "Preprocessing time -> ${t2-t3}")
-        // Log.e( "APP" , "Inference time -> ${System.currentTimeMillis() - t2}")
-
+        // Single channel bitmap, where each value is encoded in a single byte
         var depthMap = Bitmap.createBitmap( 518 , 518 , Bitmap.Config.ALPHA_8 )
         depthMap.copyPixelsFromBuffer( outputTensor.byteBuffer )
         depthMap = Bitmap.createBitmap( depthMap , 0 , 0 , 518 , 518 , rotateTransform , false )
         depthMap = Bitmap.createScaledBitmap( depthMap , inputImage.width , inputImage.height , true )
-
         return@withContext depthMap
     }
 
+    /**
+     * Convert the given `bitmap` to a `ByteBuffer`
+     * Each pixel encoded as an int32 is split into its components A, R, G and B
+     * where a new buffer with R, G and B is formed, discarding A (alpha channel)
+     * as the model's input shape is ( B , W , H , C=3 )
+     */
     private fun convert(bitmap: Bitmap): ByteBuffer {
         val imgData = ByteBuffer.allocate(
             1 * bitmap.width * bitmap.height * 3

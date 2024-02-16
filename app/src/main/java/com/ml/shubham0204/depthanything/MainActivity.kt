@@ -1,16 +1,13 @@
 package com.ml.shubham0204.depthanything
 
-import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Color
 import android.graphics.Matrix
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -46,8 +43,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
-import androidx.core.graphics.get
-import androidx.core.graphics.set
 import androidx.exifinterface.media.ExifInterface
 import com.ml.shubham0204.depthanything.ui.theme.DepthAnythingTheme
 import kotlinx.coroutines.CoroutineScope
@@ -57,7 +52,6 @@ import kotlinx.coroutines.withContext
 import net.engawapg.lib.zoomable.rememberZoomState
 import net.engawapg.lib.zoomable.zoomable
 import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
 
 class MainActivity : ComponentActivity() {
@@ -108,7 +102,7 @@ class MainActivity : ComponentActivity() {
                 val bitmap = getFixedBitmap( it )
                 CoroutineScope( Dispatchers.Default ).launch {
                     val depthMap = depthAnything.predict( bitmap )
-                    depthImageState.value = applyColormap( depthMap )
+                    depthImageState.value = colormapInferno( depthMap )
                     withContext( Dispatchers.Main ) {
                         progressState.value = false
                     }
@@ -235,15 +229,6 @@ class MainActivity : ComponentActivity() {
     }
 
 
-    private fun saveBitmap(
-        context: Context,
-        image: Bitmap,
-        name: String
-    ) {
-        val fileOutputStream = FileOutputStream(File( context.filesDir.absolutePath + "/$name.png"))
-        image.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream)
-    }
-
     private fun rotateBitmap( source: Bitmap , degrees : Float ): Bitmap {
         val matrix = Matrix()
         matrix.postRotate( degrees )
@@ -265,18 +250,6 @@ class MainActivity : ComponentActivity() {
         return imageBitmap
     }
 
-
-    private fun applyColormap(
-        depthMap: Bitmap
-    ): Bitmap {
-        val colorBitmap = Bitmap.createBitmap( depthMap.width , depthMap.height , Bitmap.Config.ARGB_8888 )
-        for( i in 0..<depthMap.width ) {
-            for( j in 0..<depthMap.height ) {
-                colorBitmap[i, j] = applyInfernoColormap( Color.alpha( depthMap[ i , j ] ) )
-            }
-        }
-        return colorBitmap
-    }
 
     // Dispatch an Intent which opens the camera application for the user.
     // The code is from -> https://developer.android.com/training/camera/photobasics#TaskPath
@@ -302,6 +275,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+
     private val takePictureLauncher = registerForActivityResult( ActivityResultContracts.TakePicture() ) {
         if( it ) {
             var bitmap = BitmapFactory.decodeFile( currentPhotoPath )
@@ -316,7 +290,7 @@ class MainActivity : ComponentActivity() {
             progressState.value = true
             CoroutineScope( Dispatchers.Default ).launch {
                 val depthMap = depthAnything.predict( bitmap )
-                depthImageState.value = applyColormap( depthMap )
+                depthImageState.value = colormapInferno( depthMap )
                 withContext( Dispatchers.Main ) {
                     progressState.value = false
                 }
