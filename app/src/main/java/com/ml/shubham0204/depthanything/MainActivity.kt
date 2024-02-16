@@ -12,6 +12,7 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,10 +21,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -32,21 +35,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.graphics.get
 import androidx.core.graphics.set
 import androidx.exifinterface.media.ExifInterface
-import com.ml.shubham0204.depthanything.ui.screens.WelcomeScreen
 import com.ml.shubham0204.depthanything.ui.theme.DepthAnythingTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -76,6 +78,7 @@ class MainActivity : ComponentActivity() {
             ActivityUI()
         }
     }
+    
 
     @Composable
     private fun ActivityUI() {
@@ -99,19 +102,75 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun ImageSelectionUI() {
+        val pickMediaLauncher = rememberLauncherForActivityResult( contract = ActivityResultContracts.PickVisualMedia() ) {
+            if( it != null ) {
+                progressState.value = true
+                val bitmap = getFixedBitmap( it )
+                CoroutineScope( Dispatchers.Default ).launch {
+                    val depthMap = depthAnything.predict( bitmap )
+                    depthImageState.value = applyColormap( depthMap )
+                    withContext( Dispatchers.Main ) {
+                        progressState.value = false
+                    }
+                }
+            }
+        }
         Column(
             horizontalAlignment = Alignment.CenterHorizontally ,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center ,
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
         ) {
-            Text(text = "Depth-Anything", style = MaterialTheme.typography.displayLarge)
-            Text(text = "The model description" , style = MaterialTheme.typography.bodyLarge)
-            Button(onClick = {
+            Text(
+                text = getString(R.string.model_name),
+                style = MaterialTheme.typography.displaySmall,
+                modifier = Modifier.align( Alignment.CenterHorizontally )
+                )
+            Text(
+                text = getString(R.string.model_description),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.align( Alignment.CenterHorizontally )
+                )
+
+            // Hyperlink-style text
+            // Reference: https://stackoverflow.com/a/69549929/13546426
+            val annotatedString = buildAnnotatedString {
+                pushStringAnnotation(tag = "paper", annotation = getString( R.string.model_paper_url ))
+                withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+                    append("View Paper")
+                }
+                pop()
+                append( "   " )
+                pushStringAnnotation(tag = "github", annotation = getString( R.string.model_github_url ))
+                withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+                    append("GitHub")
+                }
+                pop()
+            }
+            ClickableText(text = annotatedString, style = MaterialTheme.typography.bodyMedium, onClick = { offset ->
+                annotatedString.getStringAnnotations(tag = "paper", start = offset, end = offset).firstOrNull()?.let {
+                    Intent( Intent.ACTION_VIEW , Uri.parse( it.item ) ).apply {
+                        startActivity( this )
+                    }
+                }
+                annotatedString.getStringAnnotations(tag = "github", start = offset, end = offset).firstOrNull()?.let {
+                    Intent( Intent.ACTION_VIEW , Uri.parse( it.item) ).apply {
+                        startActivity( this )
+                    }
+                }
+            })
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = {
                 dispatchTakePictureIntent()
             }) {
                 Text(text = "Take A Picture")
             }
+
             Button(onClick = {
-                pickMedia.launch( PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly) )
+                pickMediaLauncher.launch( PickVisualMediaRequest( ActivityResultContracts.PickVisualMedia.ImageOnly) )
             }) {
                 Text(text = "Select From Gallery")
             }
@@ -123,36 +182,33 @@ class MainActivity : ComponentActivity() {
         depthImage: Bitmap
     ) {
         Column( modifier = Modifier.padding( 16.dp ) ) {
-            Text(text = "Depth Image", style=MaterialTheme.typography.headlineSmall )
+            Row {
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(2f) ,
+                    text = "Depth Image",
+                    style=MaterialTheme.typography.headlineSmall
+                )
+                Button(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f) ,
+                    onClick = { depthImageState.value = null }
+                ) {
+                    Text(text = "Close")
+                }
+            }
             Image(
                 modifier = Modifier
-                    .zoomable(rememberZoomState())
-                contentScale = ContentScale.Fit,
+                    .aspectRatio(depthImage.width.toFloat() / depthImage.height.toFloat())
+                    .zoomable(rememberZoomState()) ,
                 bitmap = depthImage.asImageBitmap(),
                 contentDescription = "Depth Image"
             )
-            Button(
-                modifier = Modifier.align( Alignment.CenterHorizontally ) ,
-                onClick = { depthImageState.value = null }
-            ) {
-                Text(text = "Close")
-            }
         }
     }
 
-    private val pickMedia = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null) {
-            progressState.value = true
-            val bitmap = getFixedBitmap( uri )
-            CoroutineScope( Dispatchers.Default ).launch {
-                val depthMap = depthAnything.predict( bitmap )
-                depthImageState.value = applyColormap( depthMap )
-                withContext( Dispatchers.Main ) {
-                    progressState.value = false
-                }
-            }
-        }
-    }
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable

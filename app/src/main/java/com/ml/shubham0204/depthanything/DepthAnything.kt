@@ -7,12 +7,10 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Matrix
-import android.util.Log
 import androidx.core.graphics.get
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
-import java.nio.IntBuffer
 
 class DepthAnything(
     private val context: Context

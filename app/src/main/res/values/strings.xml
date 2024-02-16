@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">Depth-Anything</string>
+
+    <string name="model_name">
+        Depth Anything
+    </string>
+    <string name="model_description">
+        Unleashing the Power of Large-Scale Unlabeled Data. Foundation Model for Monocular Depth Estimation
+    </string>
+    <string name="model_paper_url">https://arxiv.org/abs/2401.10891</string>
+    <string name="model_github_url">https://github.com/LiheYoung/Depth-Anything</string>
 </resources>

@@ -61,7 +61,8 @@ dependencies {
     implementation(libs.material3)
     implementation(libs.onnx)
     implementation("androidx.exifinterface:exifinterface:1.3.6")
-    implementation("net.engawapg.lib:zoomable:1.6.0")
+    implementation("net.engawapg.lib:zoomable:1.6.0" )
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.espresso.core)
