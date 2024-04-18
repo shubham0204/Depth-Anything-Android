@@ -34,6 +34,10 @@ $> git clone --depth=1 https://github.com/shubham0204/Depth-Anything-Android
 
 ## Useful Resources
 
+> [!NOTE]
+> The app contains an ONNX model which was created by combining the pre/post-processing operations required 
+> by `Depth-Anything` in a single model. To know more on how the model was built, refer [this](https://github.com/shubham0204/Google_Colab_Notebooks/blob/main/Depth_Anything_FusedOps_ONNX_Model.ipynb) notebook.
+
 * [Depth Anything: Unleashing the Power of Large-Scale Unlabeled Data](https://arxiv.org/abs/2401.10891)
 * [fabio-sim/Depth-Anything-ONNX](https://github.com/fabio-sim/Depth-Anything-ONNX)
 * [ONNX Runtime: How to develop a mobile application with ONNX Runtime](https://onnxruntime.ai/docs/tutorials/mobile/)
