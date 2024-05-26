@@ -42,6 +42,14 @@ $> git clone --depth=1 https://github.com/shubham0204/Depth-Anything-Android
 * [fabio-sim/Depth-Anything-ONNX](https://github.com/fabio-sim/Depth-Anything-ONNX)
 * [ONNX Runtime: How to develop a mobile application with ONNX Runtime](https://onnxruntime.ai/docs/tutorials/mobile/)
 * [ONNX Runtime: Create Float16 and Mixed Precision Models](https://onnxruntime.ai/docs/performance/model-optimizations/float16.html)
+* [Build a image preprocessing model using Pytorch and integrate into your model using ONNX](https://vilsonrodrigues.medium.com/build-a-image-preprocessing-model-using-pytorch-and-integrate-into-your-model-using-onnx-2262966c642e)
+
+### Paper Summary
+
+* MDE model trained on labeled data is used to annotate unlabeled images (62M) during training (semi-supervised learning, self learning or pseudo-labelling)
+* Teacher model trained on labeled images and then used to annotate unlabeled images. Student model trained on all images (labeled + teacher-annotated)
+* No performance gain observed, hence a more difficult optimization target was introduced for the student model. Unlabeled images are perturbed with (1) strong color distortions and (2) CutMix (used in image classification mostly)
+* Semantic assisted perception: Improve depth estimation with auxiliary semantic segmentation task, by using one shared encoder and two separate decoders
 
 ## Citation
 
