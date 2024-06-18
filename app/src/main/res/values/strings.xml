@@ -5,7 +5,8 @@
         Depth Anything
     </string>
     <string name="model_description">
-        Unleashing the Power of Large-Scale Unlabeled Data. Foundation Model for Monocular Depth Estimation
+        Unleashing the Power of Large-Scale Unlabeled Data. Foundation Model for Monocular Depth Estimation\n
+        Also supports Depth-Anything-V2 models
     </string>
     <string name="model_paper_url">https://arxiv.org/abs/2401.10891</string>
     <string name="model_github_url">https://github.com/LiheYoung/Depth-Anything</string>
