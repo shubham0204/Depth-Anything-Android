@@ -33,6 +33,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -57,6 +58,7 @@ import java.io.IOException
 class MainActivity : ComponentActivity() {
 
     private var depthImageState = mutableStateOf<Bitmap?>(null)
+    private var inferenceTimeState = mutableLongStateOf(0)
     private var progressState = mutableStateOf(false)
     private lateinit var depthAnything: DepthAnything
     private var currentPhotoPath: String = ""
@@ -97,8 +99,9 @@ class MainActivity : ComponentActivity() {
                     progressState.value = true
                     val bitmap = getFixedBitmap(it)
                     CoroutineScope(Dispatchers.Default).launch {
-                        val depthMap = depthAnything.predict(bitmap)
+                        val (depthMap,inferenceTime) = depthAnything.predict(bitmap)
                         depthImageState.value = colormapInferno(depthMap)
+                        inferenceTimeState.longValue = inferenceTime
                         withContext(Dispatchers.Main) { progressState.value = false }
                     }
                 }
@@ -106,7 +109,9 @@ class MainActivity : ComponentActivity() {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(16.dp).fillMaxWidth()
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
         ) {
             Text(
                 text = getString(R.string.model_name),
@@ -183,12 +188,16 @@ class MainActivity : ComponentActivity() {
         Column(modifier = Modifier.padding(16.dp)) {
             Row {
                 Text(
-                    modifier = Modifier.fillMaxWidth().weight(2f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(2f),
                     text = "Depth Image",
                     style = MaterialTheme.typography.headlineSmall
                 )
                 Button(
-                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
                     onClick = { depthImageState.value = null }
                 ) {
                     Text(text = "Close")
@@ -196,11 +205,13 @@ class MainActivity : ComponentActivity() {
             }
             Image(
                 modifier =
-                    Modifier.aspectRatio(depthImage.width.toFloat() / depthImage.height.toFloat())
-                        .zoomable(rememberZoomState()),
+                Modifier
+                    .aspectRatio(depthImage.width.toFloat() / depthImage.height.toFloat())
+                    .zoomable(rememberZoomState()),
                 bitmap = depthImage.asImageBitmap(),
                 contentDescription = "Depth Image"
             )
+            Text(text = "Inference time: ${inferenceTimeState.longValue} ms")
         }
     }
 
@@ -289,8 +300,9 @@ class MainActivity : ComponentActivity() {
                     }
                 progressState.value = true
                 CoroutineScope(Dispatchers.Default).launch {
-                    val depthMap = depthAnything.predict(bitmap)
+                    val (depthMap, inferenceTime) = depthAnything.predict(bitmap)
                     depthImageState.value = colormapInferno(depthMap)
+                    inferenceTimeState.longValue = inferenceTime
                     withContext(Dispatchers.Main) { progressState.value = false }
                 }
             }
