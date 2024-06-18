@@ -16,6 +16,10 @@
 </tr>
 </table>
 
+#### Depth-Anything V1 vs. V2
+
+![v1_v2_compare](https://github.com/shubham0204/Depth-Anything-Android/assets/41076823/1aab0882-cdde-47c4-a7c2-918225c020de)
+
 ## Updates
 
 * 18-06-2024: Added new models for [Depth-Anything-V2](https://arxiv.org/abs/2406.09414) with base models derived from [HuggingFace](https://huggingface.co/onnx-community/depth-anything-v2-small)
