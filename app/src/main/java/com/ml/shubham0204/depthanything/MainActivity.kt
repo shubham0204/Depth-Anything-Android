@@ -14,28 +14,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.ClickableText
-import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
@@ -63,11 +45,12 @@ class MainActivity : ComponentActivity() {
     private var progressState = mutableStateOf(false)
     private lateinit var depthAnything: DepthAnything
     private var currentPhotoPath: String = ""
+    private var selectedModelState = mutableStateOf("fused_model_uint8_256.onnx")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        depthAnything = DepthAnything(this)
+        depthAnything = DepthAnything(this, selectedModelState.value)
 
         setContent { ActivityUI() }
     }
@@ -100,13 +83,14 @@ class MainActivity : ComponentActivity() {
                     progressState.value = true
                     val bitmap = getFixedBitmap(it)
                     CoroutineScope(Dispatchers.Default).launch {
-                        val (depthMap,inferenceTime) = depthAnything.predict(bitmap)
+                        val (depthMap, inferenceTime) = depthAnything.predict(bitmap)
                         depthImageState.value = colormapInferno(depthMap)
                         inferenceTimeState.longValue = inferenceTime
                         withContext(Dispatchers.Main) { progressState.value = false }
                     }
                 }
             }
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -127,7 +111,6 @@ class MainActivity : ComponentActivity() {
             )
 
             // Hyperlink-style text
-            // Reference: https://stackoverflow.com/a/69549929/13546426
             val annotatedString = buildAnnotatedString {
                 pushStringAnnotation(
                     tag = "paper",
@@ -171,6 +154,37 @@ class MainActivity : ComponentActivity() {
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            // Model selection dropdown
+            var expanded by remember { mutableStateOf(false) }
+            val models = remember { listModelsInAssets() }
+
+            Box {
+                OutlinedButton(
+                    onClick = { expanded = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(selectedModelState.value)
+                }
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    models.forEach { model ->
+                        DropdownMenuItem(
+                            text = { Text(model) },
+                            onClick = {
+                                selectedModelState.value = model
+                                expanded = false
+                                depthAnything = DepthAnything(this@MainActivity, model)
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = { dispatchTakePictureIntent() }) { Text(text = "Take A Picture") }
 
             Button(
@@ -183,6 +197,10 @@ class MainActivity : ComponentActivity() {
                 Text(text = "Select From Gallery")
             }
         }
+    }
+
+    private fun listModelsInAssets(): List<String> {
+        return assets.list("")?.filter { it.endsWith(".onnx") } ?: emptyList()
     }
 
     @Composable
@@ -214,6 +232,7 @@ class MainActivity : ComponentActivity() {
                 contentDescription = "Depth Image"
             )
             Text(text = "Inference time: ${inferenceTimeState.longValue} ms")
+            Text(text = "Model used: ${depthAnything.modelName}")
         }
     }
 
