@@ -22,6 +22,10 @@
 
 ## Updates
 
+* 07-09-2026 (dependency refresh, no functional changes):
+  * Updated Gradle to 9.7 and Kotlin to 2.4
+  * Target Android SDK version is now 37 (CinnamonBun)
+  * All dependencies of the project have been updated to the latest versions
 * 18-06-2024: Added new models for [Depth-Anything-V2](https://arxiv.org/abs/2406.09414) with base models derived from [HuggingFace](https://huggingface.co/onnx-community/depth-anything-v2-small)
 * 16-02-2024: Add models and Android demo for [Depth-Anything](https://github.com/LiheYoung/Depth-Anything)
 
