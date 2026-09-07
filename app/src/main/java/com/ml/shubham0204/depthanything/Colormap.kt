@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.core.graphics.get
 import androidx.core.graphics.set
+import androidx.core.graphics.createBitmap
 
 // Inferno Colormap
 // Values obtained from
@@ -787,7 +788,7 @@ private val blue: IntArray =
     )
 
 fun colormapInferno(depthMap: Bitmap): Bitmap {
-    val colorBitmap = Bitmap.createBitmap(depthMap.width, depthMap.height, Bitmap.Config.ARGB_8888)
+    val colorBitmap = createBitmap(depthMap.width, depthMap.height)
     for (i in 0 ..< depthMap.width) {
         for (j in 0 ..< depthMap.height) {
             val depth = Color.alpha(depthMap[i, j])

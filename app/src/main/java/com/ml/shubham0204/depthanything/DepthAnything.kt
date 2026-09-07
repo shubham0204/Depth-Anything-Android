@@ -12,6 +12,8 @@ import androidx.core.graphics.get
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
+import androidx.core.graphics.scale
+import androidx.core.graphics.createBitmap
 
 class DepthAnything(context: Context, val modelName: String) {
 
@@ -40,12 +42,7 @@ class DepthAnything(context: Context, val modelName: String) {
 
     suspend fun predict(inputImage: Bitmap): Pair<Bitmap, Long> =
         withContext(Dispatchers.Default) {
-            val resizedImage = Bitmap.createScaledBitmap(
-                inputImage,
-                inputDim,
-                inputDim,
-                true
-            )
+            val resizedImage = inputImage.scale(inputDim, inputDim)
             val imagePixels = convert(resizedImage)
             val inputTensor =
                 OnnxTensor.createTensor(
@@ -58,10 +55,10 @@ class DepthAnything(context: Context, val modelName: String) {
             val outputs = ortSession.run(mapOf(inputName to inputTensor))
             val inferenceTime = System.currentTimeMillis() - t1
             val outputTensor = outputs[0] as OnnxTensor
-            var depthMap = Bitmap.createBitmap(outputDim, outputDim, Bitmap.Config.ALPHA_8)
+            var depthMap = createBitmap(outputDim, outputDim, Bitmap.Config.ALPHA_8)
             depthMap.copyPixelsFromBuffer(outputTensor.byteBuffer)
             depthMap = Bitmap.createBitmap(depthMap, 0, 0, outputDim, outputDim, rotateTransform, false)
-            depthMap = Bitmap.createScaledBitmap(depthMap, inputImage.width, inputImage.height, true)
+            depthMap = depthMap.scale(inputImage.width, inputImage.height)
             return@withContext Pair(depthMap, inferenceTime)
         }
 
